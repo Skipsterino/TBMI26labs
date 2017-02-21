@@ -20,7 +20,7 @@ for k = 1:25
 subplot(5,5,k),imagesc(haarFeatureMasks(:,:,k),[-1 2])
 axis image,axis off
 end
-% Create a training data set with a number of training data examples
+%% Create a training data set with a number of training data examples
 % from each class. Non-faces = class label y=-1, faces = class label y=1
 nbrTrainExamples = 100;
 trainImages = cat(3,faces(:,:,1:nbrTrainExamples),nonfaces(:,:,1:nbrTrainExamples));
