@@ -11,12 +11,12 @@ function [A, B] = sorteig(M)
 %          eigenvector corresponding to the largest eigenvalue and so on.
 %          The eigenvalues are sorted by abs(e).
 %
-%          See allso EIG.
+%          See also EIG.
 
 [V, D] = eig(M);	% get egenvectors and eigenvalues
 V = fliplr(V);		% reverse order of eigenvectors
 d = flipud(diag(D));	% extract eigenvalues and reverse their order
-[foo, I] = sort(abs(d));
+[~, I] = sort(abs(d));
 d = d(I);  		    % sort reversed eigenvalues in ascending order
 B = flipud(d);		% restore sorted eigenvalues into descending order
 for j = 1:length(I)

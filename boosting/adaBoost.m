@@ -12,17 +12,11 @@ yTrain = [ones(1,nbrTrainExamples), -ones(1,nbrTrainExamples)];
 
 %%
 close all;
-figure(1);
-T = 100;
-trainAcc = zeros(T,1);
-testAcc = zeros(T,1);
-xTest = ExtractHaarFeatures(testImages,haarFeatureMasks);
-yTest = [ones(1,nbrTestSamp), -ones(1,nbrTestSamp)];
 
-hTest = zeros(2*nbrTestSamp, T);
-nbrTestSamp = 200;
-testImages = cat(3,faces(:,:,1:nbrTestSamp),nonfaces(:,:,1:nbrTestSamp));
+Hsum = zeros(2*nbrTrainExamples, 1);
 
+
+T = 20;
 haar = nbrHaarFeatures;
 M = length(yTrain);
 d = ones(M,T)/M;
@@ -34,11 +28,13 @@ h = zeros(M,T);
 alph = zeros(T,1);
 haarOpt = zeros(T,1);
 
+accs = zeros(T+1,1);
+
 for t = 1:T
     for haf=1:haar
         inp = xTrain(haf,:);
-        for i = inp;
-           [e, he] = errorf(d(:,t), yTrain, xTrain, i, haar);
+        for i = inp
+           [e, he] = errorf(d(:,t), yTrain, xTrain, i, haf);
 
            p = 1;
            if e > 0.5
@@ -57,34 +53,29 @@ for t = 1:T
     end
 
     alph(t) = 0.5*log((1-eOpt(t))/eOpt(t));
-    d(pOpt(t)*h(:,t)==yTrain',t+1) = d(pOpt(t)*h(:,t)==yTrain',t).*exp(-alph(t));
-    d(pOpt(t)*h(:,t)~=yTrain',t+1) = d(pOpt(t)*h(:,t)~=yTrain',t).*exp(alph(t));
-    %d(:,t+1) = d(:,t) .* exp(-alph(t)*pOpt(t)*yTrain'.*h(:,t));
+    d(:,t+1) = d(:,t) .* exp(-alph(t)*pOpt(t)*yTrain'.*h(:,t));
     d(:,t+1) = d(:,t+1)./sum(d(:,t+1));
 
 
+    Hsum = Hsum + pOpt(t)*alph(t)*h(:,t);
+    HsumT = sign(Hsum);
 
-Hsum = zeros(2*nbrTrainExamples, 1);
-
-for i = 1:t
-    Hsum = Hsum + pOpt(i)*alph(i)*h(:,i);
+    accs(t) = sum(HsumT == yTrain')/(2*nbrTrainExamples);
+    
 end
 
-Hsum = sign(Hsum);
+figure(1);
+plot(accs(1:T), 'LineWidth', 1.5);
 
-trainAcc(t) = sum(Hsum == yTrain')/(2*nbrTrainExamples);
-trainAcc(t)
-
-plot(t, trainAcc(t), '-o' , 'LineWidth', 1.5);
 xlabel('Weak classifiers')
 ylabel('Accuracy')
+title('Boosting')
 hold on;
-drawnow;
 
+%%
+nbrTestSamp = 100;
+testImages = cat(3,faces(:,:,nbrTrainExamples+1:nbrTrainExamples+nbrTestSamp),nonfaces(:,:,nbrTrainExamples+1:nbrTrainExamples+nbrTestSamp));
 
-
-
-%
 % 
 % figure(1)
 % colormap gray
@@ -99,14 +90,16 @@ drawnow;
 
 Hsum = zeros(2*nbrTestSamp, 1);
 
-for i = 1:t
-    hTest(:,i) = pOpt(i)*(2*(xTest(haarOpt(i),:) > thresholdOpt(i)) - 1)';
+
+for i = 1:T
+    hTest(:,i) = pOpt(i)*(2*(xTest(haarOpt(i),:) >= thresholdOpt(i)) - 1)';
     Hsum = Hsum + alph(i)*hTest(:,i);
 end
 
 Hsum = sign(Hsum);
 
-testAcc(t) = sum(Hsum == yTest')/(2*nbrTestSamp);
-testAcc(t)
-end
+acc = sum(Hsum == yTest')/(2*nbrTestSamp)
+accs(T+1) = acc;
 
+plot(T+1,accs(T+1), 'x', 'LineWidth', 1.5);
+hold off;
