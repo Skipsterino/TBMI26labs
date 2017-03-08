@@ -1,7 +1,7 @@
 load faces, load nonfaces
 faces = double(faces); nonfaces = double(nonfaces);
-nbrHaarFeatures = 200;
-nbrTrainExamples = 150;
+nbrHaarFeatures = 300;
+nbrTrainExamples = 200;
 
 haarFeatureMasks = GenerateHaarFeatureMasks(nbrHaarFeatures);
 
@@ -13,7 +13,15 @@ yTrain = [ones(1,nbrTrainExamples), -ones(1,nbrTrainExamples)];
 %%
 close all;
 figure(1);
-for T = 5:5:100
+T = 100;
+trainAcc = zeros(T,1);
+testAcc = zeros(T,1);
+xTest = ExtractHaarFeatures(testImages,haarFeatureMasks);
+yTest = [ones(1,nbrTestSamp), -ones(1,nbrTestSamp)];
+
+hTest = zeros(2*nbrTestSamp, T);
+nbrTestSamp = 200;
+testImages = cat(3,faces(:,:,1:nbrTestSamp),nonfaces(:,:,1:nbrTestSamp));
 
 haar = nbrHaarFeatures;
 M = length(yTrain);
@@ -41,7 +49,7 @@ for t = 1:T
            if e < eOpt(t)
               eOpt(t) = e;
               pOpt(t) = p;
-              thresholdOpt(t) = i;
+              thresholdOpt(t) = i + 0.5;
               h(:,t) = he;
               haarOpt(t) = haf;
            end
@@ -54,30 +62,29 @@ for t = 1:T
     %d(:,t+1) = d(:,t) .* exp(-alph(t)*pOpt(t)*yTrain'.*h(:,t));
     d(:,t+1) = d(:,t+1)./sum(d(:,t+1));
 
-end
+
 
 Hsum = zeros(2*nbrTrainExamples, 1);
 
-for i = 1:T
+for i = 1:t
     Hsum = Hsum + pOpt(i)*alph(i)*h(:,i);
 end
 
 Hsum = sign(Hsum);
 
-acc = sum(Hsum == yTrain')/(2*nbrTrainExamples)
+trainAcc(t) = sum(Hsum == yTrain')/(2*nbrTrainExamples);
+trainAcc(t)
 
-plot(T, acc, '-o' , 'LineWidth', 1.5);
+plot(t, trainAcc(t), '-o' , 'LineWidth', 1.5);
 xlabel('Weak classifiers')
 ylabel('Accuracy')
 hold on;
 drawnow;
-end
 
 
 
-%%
-nbrTestSamp = 100;
-testImages = cat(3,faces(:,:,1:nbrTestSamp),nonfaces(:,:,1:nbrTestSamp));
+
+%
 % 
 % figure(1)
 % colormap gray
@@ -90,19 +97,16 @@ testImages = cat(3,faces(:,:,1:nbrTestSamp),nonfaces(:,:,1:nbrTestSamp));
 % subplot(5,5,k-100), imagesc(testImages(:,:,k)), axis image, axis off
 % end
 
-xTest = ExtractHaarFeatures(testImages,haarFeatureMasks);
-yTest = [ones(1,nbrTestSamp), -ones(1,nbrTestSamp)];
-
-hTest = zeros(2*nbrTestSamp, T);
 Hsum = zeros(2*nbrTestSamp, 1);
 
-for i = 1:T
+for i = 1:t
     hTest(:,i) = pOpt(i)*(2*(xTest(haarOpt(i),:) > thresholdOpt(i)) - 1)';
     Hsum = Hsum + alph(i)*hTest(:,i);
 end
 
 Hsum = sign(Hsum);
 
-acc = sum(Hsum == yTest')/(2*nbrTestSamp) 
-
+testAcc(t) = sum(Hsum == yTest')/(2*nbrTestSamp);
+testAcc(t)
+end
 
