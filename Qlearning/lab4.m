@@ -1,11 +1,11 @@
 %close all;
 clear all;
 k = 4;
-figure(5)
-episodes = 5000;
+figure(3)
+episodes = 10000;
 gamma = 0.8;
-alpha = 0.1;
-epsi = 0.4;
+alpha = 0.2;
+epsistart = 0.6
 
 gwinit(k);
 s = gwstate();
@@ -21,7 +21,11 @@ for ep = 1:episodes
         ep
     end
     %gwdraw;
+    epsi = epsistart * (episodes - ep)/episodes;
     while ~s.isterminal
+        if ~s.isvalid
+            2
+        end
         oldpos = s.pos;
         actions = [];
         if oldpos(1) == 1
@@ -46,8 +50,13 @@ for ep = 1:episodes
        
         
         action = sample(actions, probs);
+        
         gwaction(action);
         s = gwstate;
+        while ~s.isvalid
+            gwaction(action);
+            s = gwstate;
+        end
         
         actions = [];
         if s.pos(1) == 1
@@ -67,14 +76,12 @@ for ep = 1:episodes
         
         Q(oldpos(1), oldpos(2), action) = (1 - alpha)*Q(oldpos(1), oldpos(2), action) +...
             alpha * (s.feedback + gamma * max(Q(s.pos(1), s.pos(2), actions)));
-        %gwdraw;
     end
     
     
     1;
 end
 Q(Q == 0) = -inf;
-figure(5)
 gwdraw;
 for row = 1:GWXSIZE
     for col = 1:GWYSIZE
