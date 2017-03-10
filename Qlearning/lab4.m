@@ -1,18 +1,18 @@
 %close all;
 clear all;
 k = 4;
-figure(3)
-episodes = 10000;
+episodes = 5000;
 gamma = 0.8;
-alpha = 0.2;
-epsistart = 0.6
-
+alpha = 0.4;
+epsistart = 0.5
+Qfig = 3;
+Vfig = 4;
 gwinit(k);
 s = gwstate();
 GWXSIZE = s.xsize;
 GWYSIZE = s.ysize;
 
-Q = zeros(GWXSIZE, GWYSIZE, 4);
+Q = rand(GWXSIZE, GWYSIZE, 4);
 
 for ep = 1:episodes
     gwinit(k);
@@ -77,17 +77,8 @@ for ep = 1:episodes
         Q(oldpos(1), oldpos(2), action) = (1 - alpha)*Q(oldpos(1), oldpos(2), action) +...
             alpha * (s.feedback + gamma * max(Q(s.pos(1), s.pos(2), actions)));
     end
-    
-    
-    1;
 end
-Q(Q == 0) = -inf;
-gwdraw;
-for row = 1:GWXSIZE
-    for col = 1:GWYSIZE
-        [~, maxind] = max(Q(row, col, :));
-        gwplotarrow([row col]', maxind);
-    end
-end
+plotQ(Qfig,Vfig,Q)
+
 
 

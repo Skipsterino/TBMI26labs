@@ -3,6 +3,8 @@
 ## We have git for backups!
 ##---------------------------------------------------
 
+*.eps
+
 # Windows default autosave extension
 *.asv
 
